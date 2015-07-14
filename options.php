@@ -11,8 +11,9 @@ class Wp_Scss_Settings
      */
     public function __construct()
     {
-        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
+        add_action( 'network_admin_menu', array( $this, 'add_plugin_page' ) );
         add_action( 'admin_init', array( $this, 'page_init' ) );
+        add_action( 'network_admin_edit_update_wpscss_options', array( $this, 'update_wpscss_options' ), 10, 0 );
     }
 
     /**
@@ -21,7 +22,8 @@ class Wp_Scss_Settings
     public function add_plugin_page()
     {
         // This page will be under "Settings"
-        add_options_page(
+        add_submenu_page(
+            'settings.php',
             'Settings Admin',
             'WP-SCSS',
             'manage_options',
@@ -36,22 +38,21 @@ class Wp_Scss_Settings
     public function create_admin_page()
     {
         // Set class property
-        $this->options = get_option( 'wpscss_options' );
+        $this->options = get_site_option( 'wpscss_options' );
         ?>
         <div class="wrap">
             <?php screen_icon(); ?>
             <h2>WP-SCSS Settings</h2>
             <p>
-              <span class="version">Version <em><?php echo get_option('wpscss_version'); ?></em>
+              <span class="version">Version <em><?php echo get_site_option('wpscss_version'); ?></em>
               <br/>
               <span class="author">By: <a href="http://connectthink.com" target="_blank">Connect Think</a></span>
               <br/>
-              <span class="repo">Help & Issues: <a href="https://github.com/ConnectThink/WP-SCSS" target="_blank">Github</a></span>
+              <span class="repo">Help &amp; Issues: <a href="https://github.com/ConnectThink/WP-SCSS" target="_blank">Github</a></span>
             </p>
-            <form method="post" action="options.php">
+            <form method="post" action="edit.php?action=update_wpscss_options">
             <?php
                 // This prints out all hidden setting fields
-                settings_fields( 'wpscss_options_group' );
                 do_settings_sections( 'wpscss_options' );
                 submit_button();
             ?>
@@ -65,12 +66,6 @@ class Wp_Scss_Settings
      */
     public function page_init()
     {
-        register_setting(
-            'wpscss_options_group', // Option group
-            'wpscss_options', // Option name
-            array( $this, 'sanitize' ) // Sanitize
-        );
-
         // Paths to Directories
         add_settings_section(
             'wpscss_paths_section', // ID
@@ -182,6 +177,9 @@ class Wp_Scss_Settings
         if( !empty( $input['wpscss_css_dir'] ) )
             $input['wpscss_css_dir'] = sanitize_text_field( $input['wpscss_css_dir'] );
 
+        if( !empty( $input['wpscss_vars_file'] ) )
+            $input['wpscss_vars_file'] = sanitize_text_field( $input['wpscss_vars_file'] );
+
         return $input;
     }
 
@@ -227,7 +225,7 @@ class Wp_Scss_Settings
      * Select Boxes' Callbacks
      */
     public function compiling_mode_callback() {
-        $this->options = get_option( 'wpscss_options' );
+        $this->options = get_site_option( 'wpscss_options' );
 
         $html = '<select id="compiling_options" name="wpscss_options[compiling_options]">';
             $html .= '<option value="scss_formatter"' . selected( $this->options['compiling_options'], 'scss_formatter', false) . '>Expanded</option>';
@@ -238,7 +236,7 @@ class Wp_Scss_Settings
     echo $html;
     }
     public function errors_callback() {
-        $this->options = get_option( 'wpscss_options' );
+        $this->options = get_site_option( 'wpscss_options' );
 
         $html = '<select id="errors" name="wpscss_options[errors]">';
             $html .= '<option value="show"' . selected( $this->options['errors'], 'show', false) . '>Show in Header</option>';
@@ -253,7 +251,7 @@ class Wp_Scss_Settings
      * Checkboxes' Callbacks
      */
     function enqueue_callback() {
-      $this->options = get_option( 'wpscss_options' );
+      $this->options = get_site_option( 'wpscss_options' );
 
       $html = '<input type="checkbox" id="enqueue" name="wpscss_options[enqueue]" value="1"' . checked( 1, isset($this->options['enqueue']) ? $this->options['enqueue'] : 0, false ) . '/>';
       $html .= '<label for="enqueue"></label>';
@@ -261,5 +259,15 @@ class Wp_Scss_Settings
     echo $html;
     }
 
-}
+    /**
+     * Update Settings
+     */
+    function update_wpscss_options() {
+      error_log(implode(',', $_POST['wpscss_options']));
+      $updated_options = $this->sanitize( $_POST['wpscss_options'] );
+      update_site_option( 'wpscss_options', $updated_options );
 
+      wp_redirect(add_query_arg(array('page' => 'wpscss_options', 'updated' => 'true'), network_admin_url('settings.php')));
+      exit();
+    }
+}

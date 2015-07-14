@@ -30,7 +30,7 @@
 
 // Plugin Paths
 if (!defined('WPSCSS_THEME_DIR'))
-    define('WPSCSS_THEME_DIR', get_stylesheet_directory());
+    define('WPSCSS_THEME_DIR', get_theme_root() . '/teamsnap');
 
 if (!defined('WPSCSS_PLUGIN_NAME'))
     define('WPSCSS_PLUGIN_NAME', trim(dirname(plugin_basename(__FILE__)), '/'));
@@ -49,7 +49,7 @@ if (!defined('WPSCSS_VERSION_NUM'))
     define('WPSCSS_VERSION_NUM', '1.1.8');
 
 // Add version to options table
-add_option(WPSCSS_VERSION_KEY, WPSCSS_VERSION_NUM);
+add_site_option(WPSCSS_VERSION_KEY, WPSCSS_VERSION_NUM);
 
 
 /*
@@ -101,7 +101,7 @@ function wpscss_plugin_action_links($links, $file) {
  * Assign settings via settings array to pass to object
  */
 
-$wpscss_options = get_option( 'wpscss_options' );
+$wpscss_options = get_site_option( 'wpscss_options' );
 $scss_dir_setting = $wpscss_options['scss_dir'];
 $css_dir_setting = $wpscss_options['css_dir'];
 $vars_file_setting = $wpscss_options['vars_file'];
@@ -110,20 +110,20 @@ $vars_file_setting = $wpscss_options['vars_file'];
 if( $scss_dir_setting == false || $css_dir_setting == false ) {
   function wpscss_settings_error() {
       echo '<div class="error">
-        <p><strong>Wp-Scss</strong> requires both directories be specified. <a href="' . get_bloginfo('wpurl') . '/wp-admin/admin.php?page=wpscss_options">Please update your settings.</a></p>
+        <p><strong>Wp-Scss</strong> requires both directories be specified. <a href="' . get_bloginfo('wpurl') . '/wp-admin/network/admin.php?page=wpscss_options">Please update your settings.</a></p>
       </div>';
   }
-  add_action('admin_notices', 'wpscss_settings_error');
+  add_action('network_admin_notices', 'wpscss_settings_error');
   return 0; //exits
 
 // Checks if directory exists
 } elseif ( !file_exists(WPSCSS_THEME_DIR . $scss_dir_setting) || !file_exists(WPSCSS_THEME_DIR . $css_dir_setting) ) {
   function wpscss_settings_error() {
       echo '<div class="error">
-        <p><strong>Wp-Scss:</strong> One or more specified directories does not exist. Please create the directories or <a href="' . get_bloginfo('wpurl') . '/wp-admin/admin.php?page=wpscss_options">update your settings.</a></p>
+        <p><strong>Wp-Scss:</strong> One or more specified directories does not exist. Please create the directories or <a href="' . get_bloginfo('wpurl') . '/wp-admin/network/admin.php?page=wpscss_options">update your settings.</a></p>
       </div>';
   }
-  add_action('admin_notices', 'wpscss_settings_error');
+  add_action('network_admin_notices', 'wpscss_settings_error');
   return 0; //exits
 }
 
@@ -134,7 +134,7 @@ if ( !file_exists(WPSCSS_THEME_DIR . $vars_file_setting) ) {
         <p><strong>Wp-Scss:</strong> The specified variables file does not exist. Please create the file, leave the option blank, or <a href="' . get_bloginfo('wpurl') . '/wp-admin/admin.php?page=wpscss_options">update your settings.</a></p>
       </div>';
   }
-  add_action('admin_notices', 'wpscss_settings_error');
+  add_action('network_admin_notices', 'wpscss_settings_error');
   return 0; //exits
 }
 
